@@ -1,0 +1,8 @@
+# Entorno virtual: pesa mucho y se recrea con requirements.txt
+.venv/
+
+# Archivos temporales que Python genera solo
+__pycache__/
+
+# Modelos de MediaPipe: son pesados, se descargan aparte
+models/*.task
