@@ -1,4 +1,4 @@
-# Demo de tracking: cámara -> PoseTracker -> ángulos -> dibujo -> ventana.
+# Demo de tracking: cámara -> PoseTracker -> ángulos suavizados -> dibujo -> ventana.
 
 import time
 from collections import deque
@@ -6,10 +6,14 @@ from collections import deque
 import cv2
 
 from src.retargeting.angles import compute_joint_angles
+from src.retargeting.smoothing import AngleSmoother
 from src.tracking.pose_tracker import PoseTracker
 from src.visualization.drawing import draw_angles, draw_fps, draw_skeleton
 
 tracker = PoseTracker()
+
+# Suavizador de ángulos. Prueba distintos valores de alpha (0.1 a 0.6)
+smoother = AngleSmoother(alpha=0.3)
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -28,10 +32,12 @@ while True:
     pose = tracker.process(frame)
 
     if pose is not None:
-        # Ángulos calculados con los puntos 3D (en metros)
-        angles = compute_joint_angles(pose.world_landmarks)
+        # 1) Ángulos "crudos" calculados con los puntos 3D
+        raw_angles = compute_joint_angles(pose.world_landmarks)
 
-        # Dibujo con los puntos de imagen (en píxeles)
+        # 2) Los suavizamos para quitar el temblor
+        angles = smoother.update(raw_angles)
+
         draw_skeleton(frame, pose.image_landmarks)
         draw_angles(frame, pose.image_landmarks, angles)
 
