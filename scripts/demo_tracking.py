@@ -1,4 +1,5 @@
-import time  # para generar los timestamps que MediaPipe exige en modo video
+import time  # para los timestamps de MediaPipe y para medir los FPS
+from collections import deque  # lista con tamaño máximo: al llenarse, descarta lo más viejo
 
 import cv2  # OpenCV: captura y dibujo
 import mediapipe as mp  # MediaPipe: aquí lo usamos para crear la imagen de entrada
@@ -60,6 +61,10 @@ if not cap.isOpened():
 
 start_time = time.time()  # referencia para calcular los timestamps
 prev_time = time.time()  # momento del frame anterior, para medir cuánto tarda cada frame
+
+# Guarda los últimos 30 valores de FPS. Va FUERA del loop: si la creáramos
+# dentro, se vaciaría en cada frame y nunca acumularía nada.
+fps_history = deque(maxlen=30)
 
 while True:
     success, frame = cap.read()
@@ -135,14 +140,22 @@ while True:
             # Círculo blanco más grande para distinguirlo de los demás
             cv2.circle(frame, (chest_x, chest_y), 8, (255, 255, 255), -1)
 
-    # FPS = 1 / (segundos que pasaron desde el frame anterior)
+    # --- FPS ----------------------------------------------------------------
     # Está fuera del "if", así se muestra aunque no haya nadie en cámara.
+
+    # FPS instantáneo = 1 / (segundos que pasaron desde el frame anterior)
     now = time.time()
     fps = 1 / max(now - prev_time, 1e-6)  # max() evita dividir entre 0
     prev_time = now
 
+    # Guardamos este valor; al pasar de 30, deque descarta el más viejo solo
+    fps_history.append(fps)
+
+    # Promedio de los últimos frames: es el número estable que mostramos
+    avg_fps = sum(fps_history) / len(fps_history)
+
     # cv2.putText(imagen, texto, posición, fuente, tamaño, color, grosor)
-    cv2.putText(frame, f"FPS: {fps:.0f}", (10, 30),
+    cv2.putText(frame, f"FPS: {avg_fps:.0f}", (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
     cv2.imshow("Demo tracking", frame)
