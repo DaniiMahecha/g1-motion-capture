@@ -3,6 +3,7 @@
 # Los datos (qué puntos forman cada parte) vienen de body_parts.py.
 
 import cv2
+from src.retargeting.angles import JOINT_ANGLES
 
 from src.tracking.body_parts import BODY_PARTS, MIN_VISIBILITY, SKELETON
 
@@ -77,3 +78,33 @@ def draw_fps(frame, fps):
         (255, 255, 255),          # color blanco
         2,                        # grosor
     )
+
+def draw_angles(frame, landmarks, angles):
+    """Escribe el valor de cada ángulo junto a su articulación.
+
+    landmarks -> puntos de IMAGEN (para saber dónde escribir el texto)
+    angles    -> diccionario devuelto por compute_joint_angles()
+    """
+    h, w = frame.shape[:2]
+
+    for name, angle in angles.items():
+        # Si el ángulo no es confiable (None), no escribimos nada
+        if angle is None:
+            continue
+
+        # El punto del medio de la tupla (índice 1) es la articulación
+        joint_index = JOINT_ANGLES[name][1]
+        joint = landmarks[joint_index]
+
+        # Posición en píxeles, con un pequeño desplazamiento para no tapar el punto
+        pos = (int(joint.x * w) + 10, int(joint.y * h) - 10)
+
+        cv2.putText(
+            frame,
+            f"{angle:.0f}",       # ángulo sin decimales
+            pos,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255, 255, 255),
+            2,
+        )
