@@ -13,7 +13,7 @@ from src.visualization.drawing import draw_angles, draw_fps, draw_skeleton
 tracker = PoseTracker()
 
 # Suavizador de ángulos. Prueba distintos valores de alpha (0.1 a 0.6)
-smoother = AngleSmoother(alpha=0.3)
+smoother = AngleSmoother(alpha=0.1)
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
